@@ -142,4 +142,54 @@ class StatisticsTest extends \PHPUnit_Framework_TestCase
             ),
         );
     }
+
+    /**
+     * It should return histogram data.
+     *
+     * @dataProvider provideHistogram
+     */
+    public function testHistogram(array $data, $steps, array $expected)
+    {
+        $result = Statistics::histogram($data, $steps);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function provideHistogram()
+    {
+        return array(
+            array(
+                array(10, 10, 2, 2),
+                10,
+                array(
+                    2 => 2,
+                    '2.8' => 0,
+                    '3.6' => 0,
+                    '4.4' => 0,
+                    '5.2' => 0,
+                    '6' => 0,
+                    '6.8' => 0,
+                    '7.6' => 0,
+                    '8.4' => 0,
+                    '9.2' => 0,
+                    10 => 2,
+                ),
+            ),
+            array(
+                array(1, 10, 2, 2, 2, 3, 2, 4),
+                9,
+                array(
+                    1 => 1,
+                    2 => 4,
+                    3 => 1,
+                    4 => 1,
+                    5 => 0,
+                    6 => 0,
+                    7 => 0,
+                    8 => 0,
+                    9 => 0,
+                    10 => 1,
+                ),
+            ),
+        );
+    }
 }

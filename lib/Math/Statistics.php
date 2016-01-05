@@ -82,6 +82,7 @@ class Statistics
     }
 
     /**
+<<<<<<< HEAD
      * Return the mode using the kernel density estimator using the normal
      * distribution.
      *
@@ -164,5 +165,45 @@ class Statistics
         }
 
         return $space;
+    }
+
+    /**
+     *
+     * Generate a histogram
+     */
+    public static function histogram(array $values, $steps = 10)
+    {
+        $min = min($values);
+        $max = max($values);
+
+        $range = $max - $min;
+
+        $step = $range / $steps;
+        $steps++; // add one extra step to catch the max value
+
+        $histogram = array();
+
+
+        foreach ($values as $value) {
+            $floor = $min;
+            $ceil = $floor + $step;
+
+
+            for ($i = 0; $i < $steps; $i++) {
+                if (!isset($histogram[(string) $floor])) {
+                    $histogram[(string) $floor] = 0;
+                }
+
+                if ($value >= $floor && $value < $ceil) {
+                    $histogram[(string) $floor]++;
+                    break;
+                }
+
+                $floor += $step;
+                $ceil += $step;
+            }
+        }
+
+        return $histogram;
     }
 }
