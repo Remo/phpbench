@@ -171,10 +171,10 @@ class Statistics
      *
      * Generate a histogram
      */
-    public static function histogram(array $values, $steps = 10)
+    public static function histogram(array $values, $steps = 10, $lowerBound = null, $upperBound = null)
     {
-        $min = min($values);
-        $max = max($values);
+        $min = $lowerBound ?: min($values);
+        $max = $upperBound ?: max($values);
 
         $range = $max - $min;
 
@@ -183,25 +183,22 @@ class Statistics
 
         $histogram = array();
 
-
-        foreach ($values as $value) {
-            $floor = $min;
+        $floor = $min;
+        for ($i = 0; $i < $steps; $i++) {
             $ceil = $floor + $step;
 
+            if (!isset($histogram[(string) $floor])) {
+                $histogram[(string) $floor] = 0;
+            }
 
-            for ($i = 0; $i < $steps; $i++) {
-                if (!isset($histogram[(string) $floor])) {
-                    $histogram[(string) $floor] = 0;
-                }
-
+            foreach ($values as $value) {
                 if ($value >= $floor && $value < $ceil) {
                     $histogram[(string) $floor]++;
-                    break;
                 }
-
-                $floor += $step;
-                $ceil += $step;
             }
+
+            $floor += $step;
+            $ceil += $step;
         }
 
         return $histogram;

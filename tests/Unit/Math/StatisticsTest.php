@@ -148,9 +148,9 @@ class StatisticsTest extends \PHPUnit_Framework_TestCase
      *
      * @dataProvider provideHistogram
      */
-    public function testHistogram(array $data, $steps, array $expected)
+    public function testHistogram(array $data, $steps, $lower, $upper, array $expected)
     {
-        $result = Statistics::histogram($data, $steps);
+        $result = Statistics::histogram($data, $steps, $lower, $upper);
         $this->assertEquals($expected, $result);
     }
 
@@ -160,6 +160,7 @@ class StatisticsTest extends \PHPUnit_Framework_TestCase
             array(
                 array(10, 10, 2, 2),
                 10,
+                null, null,
                 array(
                     2 => 2,
                     '2.8' => 0,
@@ -177,6 +178,7 @@ class StatisticsTest extends \PHPUnit_Framework_TestCase
             array(
                 array(1, 10, 2, 2, 2, 3, 2, 4),
                 9,
+                null, null,
                 array(
                     1 => 1,
                     2 => 4,
@@ -190,6 +192,27 @@ class StatisticsTest extends \PHPUnit_Framework_TestCase
                     10 => 1,
                 ),
             ),
+            array(
+                array(
+                    3.164,
+                    6.857,
+                    5.491,
+                    3.462,
+                    4.995,
+                    3.76 ,
+                    2.857,
+                    5.795,
+                    5.352,
+                    4.483,
+                ),
+                10,
+                -3,
+                3,
+                array(
+                )
+            )
         );
     }
+
+
 }

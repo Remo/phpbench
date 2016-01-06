@@ -27,6 +27,7 @@ use PhpBench\Console\Command\RunCommand;
 use PhpBench\DependencyInjection\Container;
 use PhpBench\DependencyInjection\ExtensionInterface;
 use PhpBench\Progress\Logger\BlinkenLogger;
+use PhpBench\Progress\Logger\HistogramLogger;
 use PhpBench\Progress\Logger\DotsLogger;
 use PhpBench\Progress\Logger\NullLogger;
 use PhpBench\Progress\Logger\TravisLogger;
@@ -275,6 +276,10 @@ class CoreExtension implements ExtensionInterface
         $container->register('progress_logger.blinken', function (Container $container) {
             return new BlinkenLogger($container->get('benchmark.time_unit'));
         }, array('progress_logger' => array('name' => 'blinken')));
+
+        $container->register('progress_logger.histogram', function (Container $container) {
+            return new HistogramLogger($container->get('benchmark.time_unit'));
+        }, array('progress_logger' => array('name' => 'histogram')));
     }
 
     private function registerReportGenerators(Container $container)
