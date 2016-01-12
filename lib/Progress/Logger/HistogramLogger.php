@@ -20,7 +20,9 @@ use PhpBench\Math\Statistics;
 
 class HistogramLogger extends PhpBenchLogger
 {
-    private $blocks = array(' ', '▁',  '▂',  '▃',  '▄',  '▅',  '▆', '▇', '█');
+    private $rows = 1;
+    private $bins = 16;
+    private $blocks = array('▁',  '▂',  '▃',  '▄',  '▅',  '▆', '▇', '█');
 
     /**
      * {@inheritdoc}
@@ -84,16 +86,15 @@ class HistogramLogger extends PhpBenchLogger
         $this->output->write("\x1B[2K"); // clear the whole line
         $this->output->write("\x1B[1A");
 
-        $steps = 60;
         $sigma = 2;
 
         if ($iterations->isComputed()) {
             $times = $iterations->getZValues();
             $stats = $iterations->getStats();
-            $freqs = Statistics::histogram($times, $steps, -$sigma, $sigma);
+            $freqs = Statistics::histogram($times, $this->bins, -$sigma, $sigma);
         } else {
             $stats = array('stdev' => 0, 'mean' => 0, 'max' => 0);
-            $freqs = array_fill(0, $steps + 1, null);
+            $freqs = array_fill(0, $this->bins + 1, null);
         }
 
         $this->output->write(sprintf(
@@ -114,37 +115,61 @@ class HistogramLogger extends PhpBenchLogger
         $this->output->write(PHP_EOL);
     }
 
+    /**
+     * Height = 24
+     * Steps  = 8
+     * Value  = 20
+     *
+     *   1|▃| 24 % 8 = 4
+     *   2|█| 
+     *   3|█| 
+     */
     private function drawBlocks($freqs)
     {
+        $steps = 7;
+        $resolution = $this->rows * $steps;
         $max = max($freqs);
-        $middle = floor(count($freqs) / 2);
+        $blocks = array();
 
-        $height = 8;
-        $index = 1;
-        while (false !== $freq = current($freqs)) {
-            next($freqs);
+        for ($row = 1; $row <= $this->rows; $row++) {
+            $blocks[$row] = array();
 
-            if ($index++ == $middle) {
-                $this->output->write("\x1B[1B");
-                $this->output->write('T');
-                $this->output->write("\x1B[1A");
-                $this->output->write("\x1B[1D");
-            }
+            foreach ($freqs as &$freq) {
+                if (null === $freq || 0 === $freq) {
+                    $blocks[$row][] = ' ';
+                    continue;
+                }
 
-            if (null === $freq) {
-                $this->output->write(' ');
-                continue;
-            }
+                $scale = 1 / $max * $freq;
+                $value = $resolution * $scale;
 
-            $level = $max > 0 ? floor($height / $max * $freq) : 0;
+                $lowerLimit = $resolution - ($steps * $row);
+                $upperLimit = $lowerLimit + $steps;
 
-            if ($max == $freq) {
-                $this->output->write(sprintf('<fg=blue>%s</>', $this->blocks[$level]));
-            } else {
-                $this->output->write($this->blocks[$level]);
+                if ($value >= $lowerLimit && $value < $upperLimit) {
+                    $blockIndex = $value % $steps;
+
+                    $blocks[$row][] = $this->blocks[$blockIndex];
+                } elseif ($value < $lowerLimit) {
+                    $blocks[$row][] = ' ';
+                } else {
+                    $blocks[$row][] = $this->blocks[7];
+                }
             }
         }
 
+
+        $output = array();
+        foreach ($blocks as $blockRow) {
+            $output[] = implode('', $blockRow);
+        }
+
+        $output = implode(sprintf(
+            "\x1B[%sD\x1B[1B", 
+            count($blocks[1])
+        ), $output);
+
+        $this->output->write($output);
     }
 
     /**
