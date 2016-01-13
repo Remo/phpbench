@@ -82,6 +82,16 @@ class Runner
         $suiteEl->setAttribute('date', date('c'));
         $suiteEl->setAttribute('config-path', $this->configPath);
         $suiteEl->setAttribute('retry-threshold', $context->getRetryThreshold($this->retryThreshold));
+        $envEl = $suiteEl->appendElement('env');
+        foreach (array(
+            'os' => 's',
+            'host' => 'n',
+            'release' => 'r',
+            'version' => 'v',
+            'machine' => 'm',
+        ) as $key => $mode) {
+            $envEl->appendElement($key, php_uname($mode));
+        }
 
         $collection = $this->collectionBuilder->buildCollection($context->getPath(), $context->getFilters(), $context->getGroups());
 
