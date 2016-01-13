@@ -16,7 +16,6 @@ interface DetectorInterface
      * Return information about the detected VCS repository.
      *
      * @return VcsInformation
-     * @throws RuntimeException
      */
     public function getVcsInformation();
 }

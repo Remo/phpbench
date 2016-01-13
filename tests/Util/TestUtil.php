@@ -68,4 +68,8 @@ class TestUtil
         $benchmark->getAfterMethods()->willReturn($options['afterMethods']);
         $benchmark->getPath()->willReturn($options['path']);
     }
+
+    public static function exec($cmd)
+    {
+    }
 }

@@ -56,6 +56,8 @@ use PhpBench\Tabular\TableBuilder;
 use PhpBench\Tabular\Tabular;
 use PhpBench\Util\TimeUnit;
 use Symfony\Component\Finder\Finder;
+use PhpBench\Vcs\Detector\GitDetector;
+use PhpBench\Vcs\Detector\AggregateDetector;
 
 class CoreExtension implements ExtensionInterface
 {
@@ -86,6 +88,7 @@ class CoreExtension implements ExtensionInterface
         $this->registerProgressLoggers($container);
         $this->registerReportGenerators($container);
         $this->registerReportRenderers($container);
+        $this->registerVcs($container);
 
         $container->mergeParameters(array(
             'path' => null,
@@ -117,6 +120,11 @@ class CoreExtension implements ExtensionInterface
 
         foreach ($container->getServiceIdsForTag('benchmark_executor') as $serviceId => $attributes) {
             $container->get('benchmark.registry.executor')->registerService($attributes['name'], $serviceId);
+        }
+
+        foreach ($container->getServiceIdsForTag('vcs_detector') as $serviceId => $attributes) {
+            $detector = $container->get($serviceId);
+            $container->get('vcs.detector')->addDetector($detector);
         }
 
         $generatorConfigs = array_merge(
@@ -151,6 +159,7 @@ class CoreExtension implements ExtensionInterface
             return new Runner(
                 $container->get('benchmark.collection_builder'),
                 $container->get('benchmark.registry.executor'),
+                $container->get('vcs.detector'),
                 $container->getParameter('retry_threshold'),
                 $container->getParameter('config_path')
             );
@@ -388,6 +397,18 @@ class CoreExtension implements ExtensionInterface
             );
         });
     }
+
+    public function registerVcs(Container $container)
+    {
+        $container->register('vcs.detector.git', function (Container $container) {
+            return new GitDetector();
+        }, array('vcs_detector' => array()));
+
+        $container->register('vcs.detector', function (Container $container) {
+            return new AggregateDetector();
+        });
+    }
+
 
     private function relativizeConfigPath(Container $container)
     {

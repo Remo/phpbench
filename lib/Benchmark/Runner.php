@@ -19,6 +19,7 @@ use PhpBench\Progress\LoggerInterface;
 use PhpBench\Registry\Config;
 use PhpBench\Registry\Registry;
 use PhpBench\Util\TimeUnit;
+use PhpBench\Vcs\DetectorInterface;
 
 /**
  * The benchmark runner.
@@ -30,6 +31,7 @@ class Runner
     private $configPath;
     private $retryThreshold = null;
     private $executorRegistry;
+    private $vcsDetector;
 
     /**
      * @param CollectionBuilder $collectionBuilder
@@ -39,12 +41,14 @@ class Runner
     public function __construct(
         CollectionBuilder $collectionBuilder,
         Registry $executorRegistry,
+        DetectorInterface $vcsDetector,
         $retryThreshold,
         $configPath
     ) {
         $this->logger = new NullLogger();
         $this->collectionBuilder = $collectionBuilder;
         $this->executorRegistry = $executorRegistry;
+        $this->vcsDetector = $vcsDetector;
         $this->configPath = $configPath;
         $this->retryThreshold = $retryThreshold;
     }
@@ -83,6 +87,8 @@ class Runner
         $suiteEl->setAttribute('config-path', $this->configPath);
         $suiteEl->setAttribute('retry-threshold', $context->getRetryThreshold($this->retryThreshold));
         $envEl = $suiteEl->appendElement('env');
+        $unameEl = $envEl->appendElement('unname');
+        $vcsInfo = $this->vcsDetector->getVcsInformation();
         foreach (array(
             'os' => 's',
             'host' => 'n',
@@ -90,8 +96,23 @@ class Runner
             'version' => 'v',
             'machine' => 'm',
         ) as $key => $mode) {
-            $envEl->appendElement($key, php_uname($mode));
+            $unameEl->setAttribute($key, php_uname($mode));
         }
+        $vcsEl = $envEl->appendElement('vcs');
+        $vcsEl->setAttribute('system', $vcsInfo->getSystem());
+        $vcsEl->setAttribute('branch', $vcsInfo->getBranch());
+        $vcsEl->setAttribute('version', $vcsInfo->getVersion());
+        $phpEl = $envEl->appendElement('php');
+        $phpEl->setAttribute('version', PHP_VERSION);
+
+        if (!stristr(PHP_OS, 'win')) {
+            $load = sys_getloadavg();
+            $loadEl = $envEl->appendElement('sysload');
+            $loadEl->setAttribute('m1', $load[0]);
+            $loadEl->setAttribute('m5', $load[1]);
+            $loadEl->setAttribute('m15', $load[2]);
+        }
+
 
         $collection = $this->collectionBuilder->buildCollection($context->getPath(), $context->getFilters(), $context->getGroups());
 

@@ -2,22 +2,18 @@
 
 namespace PhpBench\Vcs\Detector;
 
+use PhpBench\Vcs\DetectorInterface;
+use PhpBench\Vcs\VcsInformation;
+
 class AggregateDetector implements DetectorInterface
 {
     private $detectors = array();
-
     /**
      * {@inheritdoc}
      */
     public function detect()
     {
-        foreach ($this->detectors as $detector) {
-            if ($detector->detect()) {
-                return true;
-            }
-        }
-
-        return false;
+        throw new \BadMethodCallException('Not implemented');
     }
 
     /**
@@ -26,14 +22,19 @@ class AggregateDetector implements DetectorInterface
     public function getVcsInformation()
     {
         foreach ($this->detectors as $detector) {
-            if ($detector->detect) {
+            if ($detector->detect()) {
                 return $detector->getVcsInformation();
             }
         }
 
-        throw new \RuntimeException(sprintf(
-            'Could not detect a VCS repository in the current directory ("%s").',
-            getcwd()
-        ));
+        return new VcsInformation('none');
+    }
+
+    /**
+     * @param DetectorInterface
+     */
+    public function addDetector(DetectorInterface $detector)
+    {
+        $this->detectors[] = $detector;
     }
 }
